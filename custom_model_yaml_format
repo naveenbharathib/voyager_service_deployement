@@ -1,0 +1,53 @@
+axelera-model-format: 1.0.0
+
+name: ppe_detection
+description: detection ppe
+
+pipeline:
+  - ppe_detection:
+      template_path: $AXELERA_FRAMEWORK/pipeline-template/yolo-letterbox.yaml
+      postprocess:
+        - decodeyolo:
+            box_format: xywh
+            conf_threshold: 0.03
+            max_nms_boxes: 30000
+            nms_class_agnostic: false
+            nms_iou_threshold: 0.45
+            nms_top_k: 300
+            normalized_coord: false
+            use_multi_label: false
+            eval:
+              conf_threshold: 0.001
+              nms_class_agnostic: false
+              nms_iou_threshold: 0.7
+              use_multi_label: true
+
+models:
+  ppe_detection:
+    class: AxUltralyticsYOLO
+    class_path: $AXELERA_FRAMEWORK/ax_models/yolo/ax_ultralytics.py
+    weight_path: $AXELERA_FRAMEWORK/customers/ppe_detection_v1.0.0/models/v5.pt
+    task_category: ObjectDetection
+    input_tensor_layout: NCHW
+    input_tensor_shape: [1, 3, 640, 640]
+    input_color_format: RGB
+    num_classes: 10
+    dataset: ppe_detection_v1.0.0Calibration
+    extra_kwargs:
+      aipu_cores: 1
+
+datasets:
+  ppe_detection_v1.0.0Calibration:
+    class: ObjDataAdapter
+    class_path: $AXELERA_FRAMEWORK/ax_datasets/objdataadapter.py
+    data_dir_name: ppe_detection_v1.0.0
+    label_type: YOLOv8
+    ultralytics_data_yaml: data.yaml
+
+model-env:
+  dependencies: [ultralytics]
+
+operators:
+  decodeyolo:
+    class: DecodeYolo
+    class_path: $AXELERA_FRAMEWORK/ax_models/decoders/yolo.py
